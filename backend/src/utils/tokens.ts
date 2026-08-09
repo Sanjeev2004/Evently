@@ -10,6 +10,7 @@ export const signAccess = (p: Payload) =>
 export const signRefresh = (p: Payload) =>
   jwt.sign(p, env.JWT_REFRESH_SECRET, {
     expiresIn: env.REFRESH_TOKEN_EXPIRY as jwt.SignOptions["expiresIn"],
+    jwtid: crypto.randomUUID(),
   });
 export const verifyAccess = (t: string) =>
   jwt.verify(t, env.JWT_ACCESS_SECRET) as jwt.JwtPayload & Payload;
