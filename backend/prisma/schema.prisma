@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ORGANIZER
+  ADMIN
+}
+
+enum EventStatus {
+  DRAFT
+  PENDING_APPROVAL
+  PUBLISHED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+}
+
+model User {
+  id String @id @default(uuid())
+  name String
+  email String @unique
+  passwordHash String
+  role Role @default(USER)
+  isBlocked Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  events Event[]
+  bookings Booking[]
+  refreshTokens RefreshToken[]
+  @@index([email])
+}
+
+model Event {
+  id String @id @default(uuid())
+  title String
+  description String
+  category String
+  venue String
+  city String
+  eventDate DateTime
+  startTime String
+  endTime String
+  ticketPrice Decimal @db.Decimal(10,2)
+  totalSeats Int
+  availableSeats Int
+  imageUrl String?
+  organizerId String
+  status EventStatus @default(DRAFT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  organizer User @relation(fields:[organizerId],references:[id],onDelete:Restrict)
+  bookings Booking[]
+  @@index([city])
+  @@index([category])
+  @@index([eventDate])
+  @@index([status])
+  @@index([organizerId])
+  @@index([status,eventDate])
+}
+
+model Booking {
+  id String @id @default(uuid())
+  userId String
+  eventId String
+  quantity Int
+  pricePerTicket Decimal @db.Decimal(10,2)
+  totalAmount Decimal @db.Decimal(10,2)
+  status BookingStatus @default(CONFIRMED)
+  bookingReference String @unique
+  bookedAt DateTime @default(now())
+  cancelledAt DateTime?
+  user User @relation(fields:[userId],references:[id],onDelete:Restrict)
+  event Event @relation(fields:[eventId],references:[id],onDelete:Restrict)
+  @@index([userId])
+  @@index([eventId])
+  @@index([bookingReference])
+  @@index([eventId,status])
+}
+
+model RefreshToken {
+  id String @id @default(uuid())
+  tokenHash String @unique
+  userId String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([userId])
+  @@index([expiresAt])
+}

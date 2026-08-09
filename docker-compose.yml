@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: event_booking
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d event_booking"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/event_booking?schema=public
+      PORT: 4000
+      NODE_ENV: production
+      JWT_ACCESS_SECRET: change-this-access-secret-at-least-32-characters
+      JWT_REFRESH_SECRET: change-this-refresh-secret-at-least-32-characters
+      ACCESS_TOKEN_EXPIRY: 15m
+      REFRESH_TOKEN_EXPIRY: 7d
+      FRONTEND_URL: http://localhost:3000
+      COOKIE_SECRET: change-this-cookie-secret-at-least-32-characters
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports: ["4000:4000"]
+    command: sh -c "npx prisma migrate deploy && node dist/prisma/seed.js && node dist/src/server.js"
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:4000/api
+    depends_on: [backend]
+    ports: ["3000:80"]
+volumes:
+  postgres_data:

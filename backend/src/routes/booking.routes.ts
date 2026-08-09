@@ -1,0 +1,12 @@
+import { Router } from "express";
+import { bookingController as c } from "../controllers/booking.controller.js";
+import { authenticate } from "../middleware/auth.js";
+import { validate } from "../middleware/validate.js";
+import { asyncHandler } from "../utils/http.js";
+import { bookingSchema } from "../validators/schemas.js";
+export const bookingRouter = Router();
+bookingRouter.use(authenticate);
+bookingRouter.post("/", validate(bookingSchema), asyncHandler(c.create));
+bookingRouter.get("/my", asyncHandler(c.my));
+bookingRouter.get("/:id", asyncHandler(c.get));
+bookingRouter.patch("/:id/cancel", asyncHandler(c.cancel));
