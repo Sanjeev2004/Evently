@@ -57,17 +57,17 @@ function Layout({ children }: { children: ReactNode }) {
             ["My bookings", "/bookings"],
           ];
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur">
+    <div className="min-h-screen bg-cream">
+      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-cream/95 backdrop-blur">
         <div className="container-page flex h-16 items-center justify-between">
           <Link
             to="/"
             className="flex items-center gap-2 text-xl font-extrabold"
           >
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 text-white">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-night text-white shadow-lg">
               <Ticket size={20} />
             </span>
-            Evently
+            <span className="tracking-tight">Evently<span className="text-brand-600">.</span></span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
             {links.map(([n, p]) => (
@@ -183,35 +183,35 @@ const Status = ({ value }: { value: string }) => (
 function Home() {
   return (
     <>
-      <section className="overflow-hidden bg-gradient-to-br from-slate-950 via-brand-700 to-blue-500 text-white">
-        <div className="container-page grid items-center gap-10 py-20 lg:grid-cols-2 lg:py-28">
+      <section className="overflow-hidden bg-night text-white">
+        <div className="container-page grid items-center gap-10 py-20 lg:grid-cols-[1.05fr_.95fr] lg:py-28">
           <div>
-            <span className="rounded-full bg-white/10 px-3 py-1 text-sm">
+            <span className="eyebrow text-orange-300">
               Discover what’s happening near you
             </span>
-            <h1 className="mt-5 text-5xl font-black leading-tight sm:text-6xl">
-              Moments worth showing up for.
+            <h1 className="mt-5 max-w-2xl text-5xl font-black leading-[.98] sm:text-7xl">
+              Make room for <em className="font-normal text-orange-300">something</em> memorable.
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-blue-100">
+            <p className="mt-7 max-w-xl text-lg leading-8 text-slate-300">
               Concerts, workshops, sports and culture—find your next experience
               and book it securely in seconds.
             </p>
             <Link
               to="/events"
-              className="mt-8 inline-flex rounded-xl bg-white px-6 py-3 font-bold text-brand-700"
+              className="btn mt-8 bg-orange-300 text-night hover:bg-orange-200"
             >
               Explore events
             </Link>
           </div>
-          <div className="hidden grid-cols-2 gap-4 lg:grid">
-            <div className="card mt-10 overflow-hidden">
+          <div className="relative hidden grid-cols-2 gap-4 lg:grid">
+            <div className="mt-14 overflow-hidden rounded-[2rem] shadow-lift">
               <img
                 className="h-56 w-full object-cover"
                 src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80"
                 alt="Concert crowd"
               />
             </div>
-            <div className="card overflow-hidden">
+            <div className="overflow-hidden rounded-[2rem] shadow-lift">
               <img
                 className="h-56 w-full object-cover"
                 src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=600&q=80"
@@ -221,7 +221,8 @@ function Home() {
           </div>
         </div>
       </section>
-      <section className="container-page py-16">
+      <section className="container-page py-20">
+        <div className="mb-8 flex items-end justify-between gap-4"><div><p className="eyebrow">Why Evently</p><h2 className="mt-2 text-3xl font-black">The good stuff, thoughtfully planned.</h2></div><span className="hidden text-sm text-slate-500 sm:block">Your next story starts here →</span></div>
         <div className="grid gap-5 md:grid-cols-3">
           {[
             [
@@ -242,8 +243,8 @@ function Home() {
           ].map(([I, t, d]) => {
             const Icon = I as typeof Ticket;
             return (
-              <div className="card p-6" key={t as string}>
-                <Icon className="text-brand-600" />
+               <div className="card group p-7 transition hover:-translate-y-1 hover:shadow-lift" key={t as string}>
+                 <div className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-50"><Icon className="text-brand-600" /></div>
                 <h2 className="mt-4 text-lg font-bold">{t as string}</h2>
                 <p className="mt-2 text-sm text-slate-600">{d as string}</p>
               </div>
@@ -318,14 +319,14 @@ function Events() {
     setParams(n);
   };
   return (
-    <div className="container-page py-10">
-      <div>
-        <h1 className="text-3xl font-black">Explore events</h1>
+      <div className="container-page py-14">
+        <div>
+          <p className="eyebrow">Find your people</p><h1 className="mt-2 text-4xl font-black sm:text-5xl">Explore events</h1>
         <p className="mt-2 text-slate-600">
           Find an experience that fits your plans.
         </p>
       </div>
-      <div className="card mt-7 grid gap-3 p-4 md:grid-cols-6">
+      <div className="card mt-8 grid gap-3 border-slate-200/70 bg-white/80 p-5 md:grid-cols-6">
         <label className="relative md:col-span-2">
           <Search className="absolute left-3 top-3 text-slate-400" size={18} />
           <input
@@ -427,7 +428,9 @@ function EventDetails() {
   const { id } = useParams();
   const { user } = useAuth();
   const [qty, setQty] = useState(1);
+  const [paymentOpen, setPaymentOpen] = useState(false);
   const qc = useQueryClient();
+  const nav = useNavigate();
   const { data: event, isLoading } = useQuery({
     queryKey: ["event", id],
     queryFn: () =>
@@ -435,9 +438,11 @@ function EventDetails() {
   });
   const book = useMutation({
     mutationFn: () => api.post("/bookings", { eventId: id, quantity: qty }),
-    onSuccess: () => {
+    onSuccess: (response) => {
       toast.success("Booking confirmed!");
       void qc.invalidateQueries({ queryKey: ["event", id] });
+      setPaymentOpen(false);
+      nav(`/bookings/${response.data.data.id}`);
     },
     onError: (e) => toast.error(errorMessage(e)),
   });
@@ -509,22 +514,33 @@ function EventDetails() {
             <span>Total</span>
             <b>{money(Number(event.ticketPrice) * qty)}</b>
           </div>
-          <button
-            className="btn-primary w-full"
-            disabled={disabled || book.isPending}
-            onClick={() => book.mutate()}
-          >
+           <button
+             className="btn-primary w-full"
+             disabled={disabled || book.isPending}
+             onClick={() => setPaymentOpen(true)}
+           >
             {!user
               ? "Log in to book"
               : event.availableSeats < 1
                 ? "Sold out"
-                : book.isPending
-                  ? "Booking…"
-                  : "Book now"}
-          </button>
-        </aside>
-      </div>
-    </div>
+                   : "Proceed to payment"}
+           </button>
+         </aside>
+       </div>
+       {paymentOpen && (
+         <div className="fixed inset-0 z-50 grid place-items-center bg-night/70 p-4 backdrop-blur-sm">
+           <div className="card w-full max-w-md p-7 shadow-lift">
+             <div className="flex items-start justify-between gap-4">
+               <div><p className="eyebrow">Demo checkout</p><h2 className="mt-2 text-3xl font-black">Complete your booking</h2></div>
+               <button className="text-2xl text-slate-400" onClick={() => setPaymentOpen(false)} aria-label="Close payment">×</button>
+             </div>
+             <div className="mt-6 rounded-2xl bg-brand-50 p-4"><p className="font-bold">{event.title}</p><p className="mt-1 text-sm text-slate-600">{qty} ticket(s) · {money(Number(event.ticketPrice) * qty)}</p></div>
+             <p className="mt-6 text-sm leading-6 text-slate-500">This is a simulated payment. No money will be charged and no card details are processed.</p>
+             <button className="btn-primary mt-6 w-full" disabled={book.isPending} onClick={() => book.mutate()}>{book.isPending ? "Confirming ticket…" : "Simulate successful payment"}</button>
+           </div>
+         </div>
+       )}
+     </div>
   );
 }
 function AuthPage({ register = false }: { register?: boolean }) {
@@ -728,6 +744,7 @@ function BookingDetails() {
   });
   if (isLoading) return <Loading />;
   if (!data) return <Empty text="Booking not found." />;
+  const qrData = encodeURIComponent(JSON.stringify({ reference: data.bookingReference, event: data.event.title, quantity: data.quantity }));
   return (
     <Page title="Booking details" subtitle="Your booking confirmation and ticket summary">
       <div className="card max-w-2xl p-7">
@@ -744,6 +761,11 @@ function BookingDetails() {
           <p><span className="block text-slate-500">Venue</span><b>{data.event.venue}, {data.event.city}</b></p>
           <p><span className="block text-slate-500">Tickets</span><b>{data.quantity}</b></p>
           <p><span className="block text-slate-500">Total paid</span><b>{money(data.totalAmount)}</b></p>
+        </div>
+        <div className="mt-8 flex flex-col items-center gap-4 rounded-2xl bg-brand-50 p-6 text-center">
+          <p className="eyebrow">Entry pass</p>
+          <img className="h-48 w-48 rounded-xl bg-white p-3 shadow-sm" src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${qrData}`} alt={`QR code for booking ${data.bookingReference}`} />
+          <p className="text-sm text-slate-600">Show this QR code at the venue for check-in.</p>
         </div>
       </div>
     </Page>
