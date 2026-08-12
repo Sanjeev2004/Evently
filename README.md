@@ -11,6 +11,8 @@ Evently is a full-stack marketplace where attendees discover and book events, or
 - Booking history and cancellation with a 24-hour deadline and transactional seat restoration
 - Organizer sales views/statistics and platform-wide admin moderation/statistics
 - Responsive React UI with protected routes, validation feedback, loading/empty/error states, toasts, and confirmations
+- Simulated checkout flow with no real payment or card processing
+- Confirmed digital tickets with QR codes containing the booking reference, event, and ticket quantity
 - Zod input validation, consistent API envelopes, centralized errors, Helmet, CORS, rate limits, Pino logging, and Swagger
 - Prisma/PostgreSQL schema, deterministic seed data, integration tests, Docker Compose, and GitHub Actions CI
 
@@ -146,6 +148,60 @@ docker compose down
 
 The app is then available at `http://localhost:3000`; the API remains at `http://localhost:4000`. PostgreSQL data persists in the named `postgres_data` volume. Do not use `docker compose down -v` unless you intend to delete local database data.
 
+## Cloud deployment
+
+Recommended setup:
+
+- Database: Neon PostgreSQL
+- Backend: Render Web Service
+- Frontend: Vercel
+
+### Render backend
+
+Create a Render Web Service from this repository:
+
+```text
+Build command: npm ci && npx prisma generate --schema backend/prisma/schema.prisma && npm run build -w backend
+Start command: npx prisma migrate deploy --schema backend/prisma/schema.prisma && node backend/dist/src/server.js
+```
+
+Add these environment variables:
+
+```env
+DATABASE_URL=your_neon_postgresql_connection_string
+PORT=4000
+NODE_ENV=production
+JWT_ACCESS_SECRET=at-least-32-random-characters
+JWT_REFRESH_SECRET=at-least-32-other-random-characters
+ACCESS_TOKEN_EXPIRY=15m
+REFRESH_TOKEN_EXPIRY=7d
+FRONTEND_URL=https://your-vercel-domain.vercel.app
+COOKIE_SECRET=at-least-32-random-characters
+```
+
+Verify the deployed API at `/api/health` and `/api/docs`.
+
+### Vercel frontend
+
+Import the repository into Vercel with:
+
+```text
+Root directory: frontend
+Framework preset: Vite
+Build command: npm run build
+Output directory: dist
+```
+
+Add this environment variable:
+
+```env
+VITE_API_BASE_URL=https://your-render-domain.onrender.com/api
+```
+
+After deployment, set the Vercel URL as `FRONTEND_URL` in Render and redeploy the backend. Both services must use HTTPS for secure authentication cookies.
+
+The simulated checkout does not charge money and requires no payment credentials. QR images are generated through the external QR Server endpoint and contain only the booking reference, event title, and quantity.
+
 ## Database commands
 
 ```bash
@@ -202,9 +258,8 @@ Add portfolio screenshots here after running the seeded application:
 
 ## Future improvements
 
-Payment-provider integration, email delivery, QR tickets, refunds, audit logs, Redis caching, waitlists, coupons, organizer CSV exports, accessibility auditing, and end-to-end browser tests are intentionally left as production extensions. The current booking flow records confirmed bookings without charging a payment method.
+Real payment-provider integration, email delivery, refunds, audit logs, Redis caching, waitlists, coupons, organizer CSV exports, accessibility auditing, and end-to-end browser tests remain production extensions. The current checkout is intentionally simulated and records confirmed bookings without charging a payment method.
 
 ## Resume-ready description
 
 > Built a role-based event marketplace with React, Express, TypeScript, PostgreSQL, and Prisma; implemented JWT refresh-token rotation, admin moderation, indexed event discovery, and transaction-safe conditional inventory updates that prevent ticket overselling under concurrent requests. Added integration tests, OpenAPI documentation, Docker Compose, structured logging, and CI quality gates.
-
