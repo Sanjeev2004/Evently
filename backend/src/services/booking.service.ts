@@ -8,9 +8,10 @@ import {
   NotFoundError,
 } from "../errors/AppError.js";
 import { bookingReference } from "../utils/tokens.js";
+import { clearCache } from "../middleware/cache.js";
 export const bookingService = {
   async create(userId: string, eventId: string, quantity: number) {
-    return prisma.$transaction(
+    const result = await prisma.$transaction(
       async (tx) => {
         const user = await tx.user.findUnique({ where: { id: userId } });
         if (!user || user.isBlocked)
@@ -51,6 +52,8 @@ export const bookingService = {
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted },
     );
+    await clearCache("cache:/api/events*");
+    return result;
   },
   my: (userId: string) =>
     prisma.booking.findMany({
@@ -76,7 +79,7 @@ export const bookingService = {
     return b;
   },
   async cancel(id: string, userId: string) {
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const b = await tx.booking.findUnique({
         where: { id },
         include: { event: true },
@@ -92,10 +95,12 @@ export const bookingService = {
         throw new BadRequestError(
           "Cancellation closes 24 hours before the event",
         );
-      const updated = await tx.booking.update({
-        where: { id },
+      const changed = await tx.booking.updateMany({
+        where: { id, status: "CONFIRMED" },
         data: { status: "CANCELLED", cancelledAt: new Date() },
       });
+      if (changed.count !== 1) throw new ConflictError("Booking already cancelled");
+      const updated = await tx.booking.findUniqueOrThrow({ where: { id } });
       await tx.event.update({
         where: { id: b.eventId },
         data: { availableSeats: { increment: b.quantity } },
@@ -103,6 +108,8 @@ export const bookingService = {
       logger.info({ bookingId: id }, "Booking cancelled");
       return updated;
     });
+    await clearCache("cache:/api/events*");
+    return result;
   },
   async forEvent(eventId: string, organizerId: string) {
     const e = await prisma.event.findUnique({ where: { id: eventId } });

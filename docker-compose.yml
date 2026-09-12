@@ -12,6 +12,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  redis:
+    image: redis:alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
   backend:
     build:
       context: .
@@ -26,8 +34,11 @@ services:
       REFRESH_TOKEN_EXPIRY: 7d
       FRONTEND_URL: http://localhost:3000
       COOKIE_SECRET: change-this-cookie-secret-at-least-32-characters
+      REDIS_URL: redis://redis:6379
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     ports: ["4000:4000"]
     command: sh -c "npx prisma migrate deploy && node dist/prisma/seed.js && node dist/src/server.js"

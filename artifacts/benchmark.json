@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-09-12T18:51:01.959Z",
+  "endpoint": "/api/events?limit=12",
+  "requests": 120,
+  "concurrency": 8,
+  "warmupRequests": 5,
+  "statuses": {
+    "200": 120
+  },
+  "durationMs": 890,
+  "requestsPerSecond": 134.89,
+  "p50Ms": 37.65,
+  "p95Ms": 156.56,
+  "node": "v24.13.1",
+  "cpu": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+  "notes": "Local development server, live PostgreSQL, no response cache. Synthetic read workload; not a production capacity or SLA claim."
+}

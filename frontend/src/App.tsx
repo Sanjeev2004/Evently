@@ -1,14 +1,9 @@
+import { EventCard } from "./EventCard";
+import { AnalyticsDashboard } from "./AnalyticsDashboard";
+import { Landing } from "./Landing";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CalendarDays,
-  MapPin,
-  Menu,
-  Search,
-  Ticket,
-  Users,
-  X,
-} from "lucide-react";
+import { CalendarDays, MapPin, Menu, Search, Ticket, X } from "lucide-react";
 import {
   Link,
   Navigate,
@@ -58,22 +53,28 @@ function Layout({ children }: { children: ReactNode }) {
           ];
   return (
     <div className="min-h-screen bg-cream">
-      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-cream/95 backdrop-blur">
-        <div className="container-page flex h-16 items-center justify-between">
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
+      <header className="site-header sticky top-0 z-40">
+        <div className="site-nav container-page flex items-center justify-between gap-4">
           <Link
             to="/"
-            className="flex items-center gap-2 text-xl font-extrabold"
+            className="site-brand flex items-center gap-2 text-xl font-extrabold"
           >
-            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-night text-white shadow-lg">
+            <span className="brand-mark grid h-10 w-10 place-items-center rounded-2xl bg-night text-white shadow-lg">
               <Ticket size={20} />
             </span>
-            <span className="tracking-tight">Evently<span className="text-brand-600">.</span></span>
+            <span className="tracking-tight">
+              Evently<span className="text-brand-600">.</span>
+            </span>
           </Link>
-          <nav className="hidden items-center gap-1 md:flex">
+          <nav className="hidden items-center gap-1 lg:flex">
             {links.map(([n, p]) => (
               <NavLink
                 key={p}
                 to={p}
+                end
                 className={({ isActive }) =>
                   `rounded-lg px-3 py-2 text-sm font-medium ${isActive ? "bg-brand-50 text-brand-700" : "text-slate-600 hover:text-ink"}`
                 }
@@ -82,7 +83,7 @@ function Layout({ children }: { children: ReactNode }) {
               </NavLink>
             ))}
           </nav>
-          <div className="hidden items-center gap-3 md:flex">
+          <div className="hidden items-center gap-3 lg:flex">
             {user ? (
               <>
                 <Link
@@ -107,15 +108,16 @@ function Layout({ children }: { children: ReactNode }) {
             )}
           </div>
           <button
-            className="md:hidden"
+            className="rounded-lg p-2 lg:hidden"
             aria-label="Toggle navigation"
+            aria-expanded={open}
             onClick={() => setOpen(!open)}
           >
             {open ? <X /> : <Menu />}
           </button>
         </div>
         {open && (
-          <div className="container-page space-y-2 border-t py-4 md:hidden">
+          <div className="container-page space-y-2 border-t py-4 lg:hidden">
             {links.map(([n, p]) => (
               <Link
                 key={p}
@@ -141,11 +143,41 @@ function Layout({ children }: { children: ReactNode }) {
           </div>
         )}
       </header>
-      <main>{children}</main>
-      <footer className="mt-20 border-t bg-white">
-        <div className="container-page flex flex-col justify-between gap-3 py-8 text-sm text-slate-500 sm:flex-row">
-          <span>© 2026 Evently. Built for memorable experiences.</span>
-          <span>Secure booking · Trusted organizers</span>
+      <main id="main-content">{children}</main>
+      <footer className="site-footer">
+        <div className="container-page footer-main">
+          <div>
+            <Link to="/" className="site-brand font-extrabold">
+              Evently<span className="text-brand-600">.</span>
+            </Link>
+            <p>
+              For the plans you look forward to.
+              <br />
+              And the stories you tell long after.
+            </p>
+          </div>
+          <div className="footer-links">
+            <div>
+              <strong>Go somewhere good</strong>
+              <Link to="/events">Discover events</Link>
+              <Link to="/events?category=Music">Live music</Link>
+              <Link to="/events?category=Tech">Ideas & technology</Link>
+            </div>
+            <div>
+              <strong>Make it happen</strong>
+              <Link
+                to={user?.role === "ORGANIZER" ? "/organizer" : "/register"}
+              >
+                For organizers
+              </Link>
+              <Link to="/bookings">Your bookings</Link>
+              <Link to={user ? "/profile" : "/login"}>Your account</Link>
+            </div>
+          </div>
+        </div>
+        <div className="container-page footer-bottom">
+          <span>&copy; 2026 Evently. Made for getting out there.</span>
+          <span>Find your people. Make a memory.</span>
         </div>
       </footer>
     </div>
@@ -167,7 +199,7 @@ function Protected({
 }
 const Loading = () => (
   <div className="container-page py-24 text-center text-slate-500">
-    Loading…
+    Loadingâ€¦
   </div>
 );
 const Empty = ({ text }: { text: string }) => (
@@ -181,120 +213,7 @@ const Status = ({ value }: { value: string }) => (
   </span>
 );
 function Home() {
-  return (
-    <>
-      <section className="overflow-hidden bg-night text-white">
-        <div className="container-page grid items-center gap-10 py-20 lg:grid-cols-[1.05fr_.95fr] lg:py-28">
-          <div>
-            <span className="eyebrow text-orange-300">
-              Discover what’s happening near you
-            </span>
-            <h1 className="mt-5 max-w-2xl text-5xl font-black leading-[.98] sm:text-7xl">
-              Make room for <em className="font-normal text-orange-300">something</em> memorable.
-            </h1>
-            <p className="mt-7 max-w-xl text-lg leading-8 text-slate-300">
-              Concerts, workshops, sports and culture—find your next experience
-              and book it securely in seconds.
-            </p>
-            <Link
-              to="/events"
-              className="btn mt-8 bg-orange-300 text-night hover:bg-orange-200"
-            >
-              Explore events
-            </Link>
-          </div>
-          <div className="relative hidden grid-cols-2 gap-4 lg:grid">
-            <div className="mt-14 overflow-hidden rounded-[2rem] shadow-lift">
-              <img
-                className="h-56 w-full object-cover"
-                src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80"
-                alt="Concert crowd"
-              />
-            </div>
-            <div className="overflow-hidden rounded-[2rem] shadow-lift">
-              <img
-                className="h-56 w-full object-cover"
-                src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=600&q=80"
-                alt="Festival"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-      <section className="container-page py-20">
-        <div className="mb-8 flex items-end justify-between gap-4"><div><p className="eyebrow">Why Evently</p><h2 className="mt-2 text-3xl font-black">The good stuff, thoughtfully planned.</h2></div><span className="hidden text-sm text-slate-500 sm:block">Your next story starts here →</span></div>
-        <div className="grid gap-5 md:grid-cols-3">
-          {[
-            [
-              CalendarDays,
-              "Curated experiences",
-              "Browse upcoming events across cities and categories.",
-            ],
-            [
-              Ticket,
-              "Instant booking",
-              "Real-time seat availability and secure confirmation.",
-            ],
-            [
-              Users,
-              "Trusted organizers",
-              "Events reviewed before they go live.",
-            ],
-          ].map(([I, t, d]) => {
-            const Icon = I as typeof Ticket;
-            return (
-               <div className="card group p-7 transition hover:-translate-y-1 hover:shadow-lift" key={t as string}>
-                 <div className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-50"><Icon className="text-brand-600" /></div>
-                <h2 className="mt-4 text-lg font-bold">{t as string}</h2>
-                <p className="mt-2 text-sm text-slate-600">{d as string}</p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-    </>
-  );
-}
-function EventCard({ event }: { event: Event }) {
-  return (
-    <article className="card group overflow-hidden">
-      <div className="relative h-48 overflow-hidden bg-slate-200">
-        <img
-          src={
-            event.imageUrl ||
-            "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80"
-          }
-          alt=""
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-        />
-        <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold text-brand-700">
-          {event.category}
-        </span>
-      </div>
-      <div className="p-5">
-        <h2 className="line-clamp-1 text-lg font-bold">{event.title}</h2>
-        <p className="mt-3 flex items-center gap-2 text-sm text-slate-600">
-          <CalendarDays size={16} />
-          {date(event.eventDate)} · {event.startTime}
-        </p>
-        <p className="mt-2 flex items-center gap-2 text-sm text-slate-600">
-          <MapPin size={16} />
-          {event.venue}, {event.city}
-        </p>
-        <div className="mt-5 flex items-end justify-between">
-          <div>
-            <p className="text-xs text-slate-500">From</p>
-            <p className="font-extrabold text-brand-700">
-              {money(event.ticketPrice)}
-            </p>
-          </div>
-          <Link className="btn-primary" to={`/events/${event.id}`}>
-            View details
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
+  return <Landing />;
 }
 function Events() {
   const [params, setParams] = useSearchParams();
@@ -315,40 +234,47 @@ function Events() {
     const n = new URLSearchParams(params);
     if (v) n.set(k, v);
     else n.delete(k);
-    n.delete("page");
+    if (k !== "page") n.delete("page");
+    if (k === "sort")
+      n.set("order", v === "popularity" || v === "createdAt" ? "desc" : "asc");
     setParams(n);
   };
   return (
-      <div className="container-page py-14">
-        <div>
-          <p className="eyebrow">Find your people</p><h1 className="mt-2 text-4xl font-black sm:text-5xl">Explore events</h1>
+    <div className="container-page py-14">
+      <div className="explore-heading">
+        <p className="eyebrow">The best plans start with a little curiosity</p>
+        <h1 className="mt-2 text-4xl font-black sm:text-5xl">Explore events</h1>
         <p className="mt-2 text-slate-600">
           Find an experience that fits your plans.
         </p>
       </div>
-      <div className="card mt-8 grid gap-3 border-slate-200/70 bg-white/80 p-5 md:grid-cols-6">
+      <div className="explore-filters card mt-6 grid gap-3 bg-white p-5 md:grid-cols-6">
         <label className="relative md:col-span-2">
           <Search className="absolute left-3 top-3 text-slate-400" size={18} />
           <input
             className="field pl-10"
-            placeholder="Search events, venues…"
+            aria-label="Search events"
+            placeholder="Search events, venuesâ€¦"
             value={params.get("search") ?? ""}
             onChange={(e) => set("search", e.target.value)}
           />
         </label>
         <input
           className="field"
+          aria-label="City"
           placeholder="City"
           value={params.get("city") ?? ""}
           onChange={(e) => set("city", e.target.value)}
         />
         <input
           className="field"
+          aria-label="Category"
           placeholder="Category"
           value={params.get("category") ?? ""}
           onChange={(e) => set("category", e.target.value)}
         />
         <select
+          aria-label="Sort events"
           className="field"
           value={params.get("sort") ?? "date"}
           onChange={(e) => set("sort", e.target.value)}
@@ -385,6 +311,28 @@ function Events() {
           onChange={(e) => set("maxPrice", e.target.value)}
         />
       </div>
+      <div className="filter-categories" aria-label="Filter by category">
+        {["All", "Music", "Tech", "Art", "Sports"].map((category) => (
+          <button
+            key={category}
+            aria-pressed={
+              category === "All"
+                ? !params.get("category")
+                : params.get("category") === category
+            }
+            onClick={() => set("category", category === "All" ? "" : category)}
+          >
+            {category === "All" ? "All experiences" : category}
+          </button>
+        ))}
+      </div>
+      <p className="results-summary" aria-live="polite">
+        {isLoading
+          ? "Finding your next experience..."
+          : isError
+            ? "Unable to load results"
+            : `${data?.pagination.total ?? 0} experiences found`}
+      </p>
       {isLoading ? (
         <Loading />
       ) : isError ? (
@@ -476,7 +424,7 @@ function EventDetails() {
           <h1 className="mt-4 text-4xl font-black">{event.title}</h1>
           <div className="mt-6 grid gap-3 text-slate-600 sm:grid-cols-2">
             <p className="flex gap-2">
-              <CalendarDays /> {date(event.eventDate)}, {event.startTime}–
+              <CalendarDays /> {date(event.eventDate)}, {event.startTime}â€“
               {event.endTime}
             </p>
             <p className="flex gap-2">
@@ -514,33 +462,60 @@ function EventDetails() {
             <span>Total</span>
             <b>{money(Number(event.ticketPrice) * qty)}</b>
           </div>
-           <button
-             className="btn-primary w-full"
-             disabled={disabled || book.isPending}
-             onClick={() => setPaymentOpen(true)}
-           >
+          <button
+            className="btn-primary w-full"
+            disabled={disabled || book.isPending}
+            onClick={() => setPaymentOpen(true)}
+          >
             {!user
               ? "Log in to book"
               : event.availableSeats < 1
                 ? "Sold out"
-                   : "Proceed to payment"}
-           </button>
-         </aside>
-       </div>
-       {paymentOpen && (
-         <div className="fixed inset-0 z-50 grid place-items-center bg-night/70 p-4 backdrop-blur-sm">
-           <div className="card w-full max-w-md p-7 shadow-lift">
-             <div className="flex items-start justify-between gap-4">
-               <div><p className="eyebrow">Demo checkout</p><h2 className="mt-2 text-3xl font-black">Complete your booking</h2></div>
-               <button className="text-2xl text-slate-400" onClick={() => setPaymentOpen(false)} aria-label="Close payment">×</button>
-             </div>
-             <div className="mt-6 rounded-2xl bg-brand-50 p-4"><p className="font-bold">{event.title}</p><p className="mt-1 text-sm text-slate-600">{qty} ticket(s) · {money(Number(event.ticketPrice) * qty)}</p></div>
-             <p className="mt-6 text-sm leading-6 text-slate-500">This is a simulated payment. No money will be charged and no card details are processed.</p>
-             <button className="btn-primary mt-6 w-full" disabled={book.isPending} onClick={() => book.mutate()}>{book.isPending ? "Confirming ticket…" : "Simulate successful payment"}</button>
-           </div>
-         </div>
-       )}
-     </div>
+                : "Proceed to payment"}
+          </button>
+        </aside>
+      </div>
+      {paymentOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-night/70 p-4 backdrop-blur-sm">
+          <div className="card w-full max-w-md p-7 shadow-lift">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="eyebrow">Demo checkout</p>
+                <h2 className="mt-2 text-3xl font-black">
+                  Complete your booking
+                </h2>
+              </div>
+              <button
+                className="text-2xl text-slate-400"
+                onClick={() => setPaymentOpen(false)}
+                aria-label="Close payment"
+              >
+                Ã—
+              </button>
+            </div>
+            <div className="mt-6 rounded-2xl bg-brand-50 p-4">
+              <p className="font-bold">{event.title}</p>
+              <p className="mt-1 text-sm text-slate-600">
+                {qty} ticket(s) Â· {money(Number(event.ticketPrice) * qty)}
+              </p>
+            </div>
+            <p className="mt-6 text-sm leading-6 text-slate-500">
+              This is a simulated payment. No money will be charged and no card
+              details are processed.
+            </p>
+            <button
+              className="btn-primary mt-6 w-full"
+              disabled={book.isPending}
+              onClick={() => book.mutate()}
+            >
+              {book.isPending
+                ? "Confirming ticketâ€¦"
+                : "Simulate successful payment"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 function AuthPage({ register = false }: { register?: boolean }) {
@@ -561,7 +536,9 @@ function AuthPage({ register = false }: { register?: boolean }) {
   }) => {
     setError("");
     const schema = z.object({
-      name: register ? z.string().trim().min(2, "Name is required") : z.string(),
+      name: register
+        ? z.string().trim().min(2, "Name is required")
+        : z.string(),
       email: z.string().email("Enter a valid email"),
       password: z.string().min(8, "Password must be at least 8 characters"),
       role: z.enum(["USER", "ORGANIZER"]),
@@ -706,11 +683,11 @@ function MyBookings() {
                   <Status value={b.status} />
                 </div>
                 <p className="mt-1 text-sm text-slate-500">
-                  {b.bookingReference} · {b.quantity} ticket(s) ·{" "}
+                  {b.bookingReference} Â· {b.quantity} ticket(s) Â·{" "}
                   {money(b.totalAmount)}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {date(b.event.eventDate)} · {b.event.city}
+                  {date(b.event.eventDate)} Â· {b.event.city}
                 </p>
               </div>
               <Link className="btn-secondary" to={`/bookings/${b.id}`}>
@@ -744,28 +721,61 @@ function BookingDetails() {
   });
   if (isLoading) return <Loading />;
   if (!data) return <Empty text="Booking not found." />;
-  const qrData = encodeURIComponent(JSON.stringify({ reference: data.bookingReference, event: data.event.title, quantity: data.quantity }));
+  const qrData = encodeURIComponent(
+    JSON.stringify({
+      reference: data.bookingReference,
+      event: data.event.title,
+      quantity: data.quantity,
+    }),
+  );
   return (
-    <Page title="Booking details" subtitle="Your booking confirmation and ticket summary">
+    <Page
+      title="Booking details"
+      subtitle="Your booking confirmation and ticket summary"
+    >
       <div className="card max-w-2xl p-7">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-5">
           <div>
-            <p className="text-xs uppercase tracking-widest text-slate-500">Booking reference</p>
-            <p className="mt-1 font-mono text-xl font-bold">{data.bookingReference}</p>
+            <p className="text-xs uppercase tracking-widest text-slate-500">
+              Booking reference
+            </p>
+            <p className="mt-1 font-mono text-xl font-bold">
+              {data.bookingReference}
+            </p>
           </div>
           <Status value={data.status} />
         </div>
         <h2 className="mt-6 text-2xl font-black">{data.event.title}</h2>
         <div className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-          <p><span className="block text-slate-500">Date</span><b>{date(data.event.eventDate)}</b></p>
-          <p><span className="block text-slate-500">Venue</span><b>{data.event.venue}, {data.event.city}</b></p>
-          <p><span className="block text-slate-500">Tickets</span><b>{data.quantity}</b></p>
-          <p><span className="block text-slate-500">Total paid</span><b>{money(data.totalAmount)}</b></p>
+          <p>
+            <span className="block text-slate-500">Date</span>
+            <b>{date(data.event.eventDate)}</b>
+          </p>
+          <p>
+            <span className="block text-slate-500">Venue</span>
+            <b>
+              {data.event.venue}, {data.event.city}
+            </b>
+          </p>
+          <p>
+            <span className="block text-slate-500">Tickets</span>
+            <b>{data.quantity}</b>
+          </p>
+          <p>
+            <span className="block text-slate-500">Total paid</span>
+            <b>{money(data.totalAmount)}</b>
+          </p>
         </div>
         <div className="mt-8 flex flex-col items-center gap-4 rounded-2xl bg-brand-50 p-6 text-center">
           <p className="eyebrow">Entry pass</p>
-          <img className="h-48 w-48 rounded-xl bg-white p-3 shadow-sm" src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${qrData}`} alt={`QR code for booking ${data.bookingReference}`} />
-          <p className="text-sm text-slate-600">Show this QR code at the venue for check-in.</p>
+          <img
+            className="h-48 w-48 rounded-xl bg-white p-3 shadow-sm"
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${qrData}`}
+            alt={`QR code for booking ${data.bookingReference}`}
+          />
+          <p className="text-sm text-slate-600">
+            Show this QR code at the venue for check-in.
+          </p>
         </div>
       </div>
     </Page>
@@ -795,40 +805,8 @@ function Page({
     </div>
   );
 }
-function StatGrid({ stats }: { stats: Record<string, unknown> }) {
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {Object.entries(stats).map(([k, v]) => (
-        <div className="card p-6" key={k}>
-          <p className="text-sm capitalize text-slate-500">
-            {k.replace(/([A-Z])/g, " $1")}
-          </p>
-          <p className="mt-2 text-3xl font-black">
-            {k.toLowerCase().includes("revenue")
-              ? money(v as number)
-              : String(v)}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-}
 function OrganizerDashboard() {
-  const { data } = useQuery({
-    queryKey: ["org-stats"],
-    queryFn: () =>
-      api
-        .get<ApiResponse<Record<string, unknown>>>("/organizer/stats")
-        .then((r) => r.data.data),
-  });
-  return (
-    <Page
-      title="Organizer overview"
-      subtitle="A snapshot of your event business"
-    >
-      <StatGrid stats={data ?? {}} />
-    </Page>
-  );
+  return <AnalyticsDashboard />;
 }
 function OrganizerEvents() {
   const { data, isLoading } = useQuery({
@@ -1070,21 +1048,7 @@ function EventBookings() {
   );
 }
 function AdminDashboard() {
-  const { data } = useQuery({
-    queryKey: ["admin-stats"],
-    queryFn: () =>
-      api
-        .get<ApiResponse<Record<string, unknown>>>("/admin/stats")
-        .then((r) => r.data.data),
-  });
-  return (
-    <Page
-      title="Platform dashboard"
-      subtitle="Operational health and marketplace activity"
-    >
-      <StatGrid stats={data ?? {}} />
-    </Page>
-  );
+  return <AnalyticsDashboard admin />;
 }
 function AdminEvents() {
   const qc = useQueryClient();
@@ -1417,7 +1381,7 @@ export default function App() {
             <Message
               code="404"
               title="Page not found"
-              text="The page you’re looking for does not exist."
+              text="The page youâ€™re looking for does not exist."
             />
           }
         />

@@ -1,3 +1,5 @@
+import { metricsSnapshot } from "../middleware/metrics.js";
+import { analytics } from "../controllers/analytics.controller.js";
 import { Router } from "express";
 import { adminController as c } from "../controllers/admin.controller.js";
 import { eventController } from "../controllers/event.controller.js";
@@ -7,7 +9,9 @@ import { asyncHandler } from "../utils/http.js";
 import { rejectSchema, userBlockSchema } from "../validators/schemas.js";
 export const adminRouter = Router();
 adminRouter.use(authenticate, authorize("ADMIN"));
+adminRouter.get("/analytics", asyncHandler(analytics));
 adminRouter.get("/stats", asyncHandler(c.stats));
+adminRouter.get("/metrics", (_req, res) => res.set("Cache-Control", "no-store").json({ success: true, data: metricsSnapshot() }));
 adminRouter.get("/users", asyncHandler(c.users));
 adminRouter.patch(
   "/users/:id/block",

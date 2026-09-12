@@ -2,6 +2,29 @@
 
 Evently is a full-stack marketplace where attendees discover and book events, organizers manage inventory and sales, and administrators moderate the platform. It is designed as an SDE portfolio project with real authentication, relational persistence, transactions, RBAC, testing, documentation, containers, and CI—not a mock API.
 
+## September upgrade: analytics and reliability
+
+- Redesigned discovery homepage with search, categories, upcoming event cards and an organizer entry point.
+- Organizer/admin analytics: 7/30/90-day UTC windows, confirmed booking value, tickets, cancellation rate, daily chart/table, top five events, CSV export, and 30-second refresh.
+- Admin-only process telemetry: request count, p95 latency, server error rate and uptime. Latency samples are bounded to the last 2,000 requests; counters reset on restart.
+- Concurrent cancellation now conditionally claims the confirmed booking before restoring seats. Cache invalidation happens after transaction commit.
+- Fixed discovery pagination and sorting; concurrent expired-token requests now share one refresh operation.
+- Optional Redis for shared rate limits, separate limiter key prefixes, configurable trusted proxy hops, dependency readiness and graceful HTTP draining. Discovery inventory is read directly from PostgreSQL to avoid stale availability.
+
+### See the app and numbers locally
+
+Run `npm run dev`, open http://localhost:5173, and log in with `demo.organizer@evently.dev` / `Password123!`. The demo organizer overview contains **synthetic** data from four labeled demo events and 48 sample bookings. These are not real customers or collected revenue. The local-only `npm run demo:analytics -w backend` adds this dataset without clearing existing records and skips previously created demo events.
+
+Organizer analytics: `/organizer`. Admin analytics/performance: `/admin` (admin account required).
+
+Run `node scripts/benchmark.mjs` from the root with the API running. Results are saved to `artifacts/benchmark.json`. The script only targets localhost, sends 120 reads at concurrency 8 after five warmups, and reports HTTP failures separately. Its small dataset and short local run do not establish sustained production capacity.
+
+### Verification and deployment limits
+
+See [verification report](artifacts/verification.md) for measured results and outstanding checks. Checkout remains simulated. Before a real paid launch, implement payment/webhook idempotency, actual refunds and email delivery; validate deployment cookies/CORS, backups and recovery; add persistent multi-replica observability and representative sustained load tests. Current admin/organizer legacy list endpoints still need bounded pagination for large datasets.
+
+`GET /api/health` is liveness; `GET /api/ready` checks PostgreSQL and configured Redis. Leave `REDIS_URL` unset for single-process local development. Before using multiple replicas, configure shared Redis and test failover. Set `TRUST_PROXY_HOPS` to the exact number of trusted reverse proxies (default 0); do not blindly trust arbitrary forwarded IP headers. The new metrics endpoint is admin-only; it reports one process, not fleet-wide capacity. Redis outage and multi-replica behavior have not been load tested.
+
 ## Features
 
 - JWT access tokens plus rotating, revocable refresh tokens in secure HTTP-only cookies
@@ -131,8 +154,8 @@ npm run seed -w backend
 npm run dev
 ```
 
-Frontend: `http://localhost:5173`  
-API: `http://localhost:4000/api`  
+Frontend: `http://localhost:5173`
+API: `http://localhost:4000/api`
 Swagger: `http://localhost:4000/api/docs`
 
 ### Environment variables

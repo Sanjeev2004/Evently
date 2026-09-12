@@ -1,0 +1,12 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+const base = process.env.BENCHMARK_URL ?? 'http://localhost:4000';
+if (!['localhost','127.0.0.1'].includes(new URL(base).hostname)) throw new Error('Benchmark is restricted to localhost');
+const count=120, concurrency=8, timings=[], statuses={}; let next=0;
+for(let i=0;i<5;i++) await fetch(`${base}/api/events?limit=12`);
+const start=performance.now();
+await Promise.all(Array.from({length:concurrency},async()=>{while(next++<count){const t=performance.now();try{const r=await fetch(`${base}/api/events?limit=12`,{signal:AbortSignal.timeout(15000)});await r.arrayBuffer();statuses[r.status]=(statuses[r.status]??0)+1;}catch{statuses.networkError=(statuses.networkError??0)+1;}timings.push(performance.now()-t);}}));
+const elapsed=performance.now()-start;timings.sort((a,b)=>a-b);
+const result={timestamp:new Date().toISOString(),endpoint:'/api/events?limit=12',requests:count,concurrency,warmupRequests:5,statuses,durationMs:Math.round(elapsed),requestsPerSecond:+(count/(elapsed/1000)).toFixed(2),p50Ms:+timings[Math.ceil(count*.5)-1].toFixed(2),p95Ms:+timings[Math.ceil(count*.95)-1].toFixed(2),node:process.version,cpu:os.cpus()[0]?.model,notes:'Local development server, live PostgreSQL, no response cache. Synthetic read workload; not a production capacity or SLA claim.'};
+await mkdir('artifacts',{recursive:true});await writeFile('artifacts/benchmark.json',JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result,null,2));
+if(statuses[200]!==count) process.exitCode=1;

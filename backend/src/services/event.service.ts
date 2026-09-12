@@ -6,6 +6,7 @@ import {
   NotFoundError,
 } from "../errors/AppError.js";
 import { eventRepository } from "../repositories/event.repository.js";
+import { clearCache } from "../middleware/cache.js";
 type Query = {
   search?: string;
   category?: string;
@@ -83,11 +84,13 @@ export const eventService = {
     return e;
   },
   async create(organizerId: string, input: Record<string, unknown>) {
-    return eventRepository.create({
+    const result = await eventRepository.create({
       ...input,
       organizerId,
       availableSeats: input.totalSeats as number,
     } as Prisma.EventUncheckedCreateInput);
+    await clearCache("cache:/api/events*");
+    return result;
   },
   async update(
     id: string,
@@ -111,12 +114,14 @@ export const eventService = {
         );
       input.availableSeats = total - sold;
     }
-    return eventRepository.update(id, {
+    const result = await eventRepository.update(id, {
       ...input,
       ...(e.status === "PUBLISHED" && user.role !== "ADMIN"
         ? { status: "PENDING_APPROVAL" }
         : {}),
     });
+    await clearCache("cache:/api/events*");
+    return result;
   },
   async submit(id: string, userId: string) {
     const e = await eventRepository.byId(id);
@@ -126,14 +131,18 @@ export const eventService = {
       throw new BadRequestError(
         "Only draft or rejected events can be submitted",
       );
-    return eventRepository.update(id, { status: "PENDING_APPROVAL" });
+    const result = await eventRepository.update(id, { status: "PENDING_APPROVAL" });
+    await clearCache("cache:/api/events*");
+    return result;
   },
   async moderate(id: string, status: "PUBLISHED" | "REJECTED") {
     const e = await eventRepository.byId(id);
     if (!e) throw new NotFoundError("Event not found");
     if (e.status !== "PENDING_APPROVAL")
       throw new BadRequestError("Event is not pending approval");
-    return eventRepository.update(id, { status });
+    const result = await eventRepository.update(id, { status });
+    await clearCache("cache:/api/events*");
+    return result;
   },
   async cancel(id: string, user: { id: string; role: string }) {
     const e = await eventRepository.byId(id);
@@ -142,15 +151,19 @@ export const eventService = {
       throw new AuthorizationError();
     if (["CANCELLED", "COMPLETED"].includes(e.status))
       throw new BadRequestError("Event cannot be cancelled");
-    return eventRepository.update(id, { status: "CANCELLED" });
+    const result = await eventRepository.update(id, { status: "CANCELLED" });
+    await clearCache("cache:/api/events*");
+    return result;
   },
   async remove(id: string, userId: string) {
     const e = await eventRepository.byId(id);
     if (!e) throw new NotFoundError("Event not found");
     if (e.organizerId !== userId) throw new AuthorizationError();
-    return (await eventRepository.countBookings(id)) > 0
+    const result = await ((await eventRepository.countBookings(id)) > 0
       ? eventRepository.update(id, { status: "CANCELLED" })
-      : prisma.event.delete({ where: { id } });
+      : prisma.event.delete({ where: { id } }));
+    await clearCache("cache:/api/events*");
+    return result;
   },
   organizerEvents: (id: string) =>
     prisma.event.findMany({

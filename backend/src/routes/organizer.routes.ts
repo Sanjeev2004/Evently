@@ -1,3 +1,4 @@
+import { analytics } from "../controllers/analytics.controller.js";
 import { Router } from "express";
 import { adminController } from "../controllers/admin.controller.js";
 import { bookingController } from "../controllers/booking.controller.js";
@@ -11,4 +12,5 @@ organizerRouter.get(
   "/events/:eventId/bookings",
   asyncHandler(bookingController.forEvent),
 );
+organizerRouter.get("/analytics", asyncHandler(analytics));
 organizerRouter.get("/stats", asyncHandler(adminController.organizerStats));
